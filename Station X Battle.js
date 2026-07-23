@@ -69,7 +69,7 @@ if (attackButtonImg) {
         }
     
         setTimeout(() => {
-          window.location.href = "Station X.html";
+          window.location.href = "index.html";
         }, 2500);
       }
     }
