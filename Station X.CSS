@@ -1,0 +1,64 @@
+body {
+  margin: 0;
+  background-color: #000000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+canvas {
+  border: 2px solid #089863;
+  background: transparent;
+  image-rendering: pixelated;
+}
+
+.game-ui {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+}
+
+.inventory-panel {
+  position: absolute;
+  top: 80px;
+  left: 16px;
+  width: 280px;
+  max-height: 320px;
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.95);
+  border: 2px solid #089863;
+  border-radius: 10px;
+  color: #ffffff;
+  font-family: Arial, sans-serif;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+  z-index: 20;
+}
+
+.inventory-panel.hidden {
+  display: none;
+}
+
+.inventory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.inventory-close {
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.inventory-contents {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
