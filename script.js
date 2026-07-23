@@ -93,7 +93,8 @@ ctx.imageSmoothingEnabled = false;
 
 function startLoop() {
   const allScenesLoaded = scenes.every((sceneDef) => sceneDef.loaded);
-  if (allScenesLoaded && stickLoaded && stickLeftLoaded && stickFrontLoaded && crowbarLoaded && crowbarInteractLoaded && monster1Loaded) {
+  const monsterReady = monster1Loaded || monster1Defeated;
+  if (allScenesLoaded && stickLoaded && stickLeftLoaded && stickFrontLoaded && crowbarLoaded && crowbarInteractLoaded && monsterReady) {
     requestAnimationFrame(gameLoop);
   }
 }
@@ -110,6 +111,7 @@ window.addEventListener("keydown", (event) => {
     if (scene === 1 && !crowbarPicked && playerOverCrowbar) {
       crowbarPicked = true;
       inventoryItems.push("Crowbar");
+      try { localStorage.setItem('hasCrowbar', '1'); } catch (e) { console.warn('Could not persist crowbar flag', e); }
       updateInventoryContents();
       toggleInventory(true);
     }
@@ -137,6 +139,50 @@ let inventoryItems = [];
 let crowbarPicked = false;
 let playerOverCrowbar = false;
 let battleStarted = false;
+
+try {
+  const returning = localStorage && localStorage.getItem && localStorage.getItem('playerReturn');
+  if (returning) {
+    if (localStorage.getItem('hasCrowbar') === '1') {
+      crowbarPicked = true;
+      inventoryItems.push('Crowbar');
+    }
+    try { localStorage.removeItem('hasCrowbar'); } catch (e) {}
+  } else {
+    
+    try { localStorage.removeItem('hasCrowbar'); } catch (e) {}
+    crowbarPicked = false;
+  }
+} catch (e) {
+  console.warn('LocalStorage not available for crowbar persistence:', e);
+}
+
+let monster1Defeated = false;
+try {
+  const hasPlayerReturn = localStorage && localStorage.getItem && localStorage.getItem('playerReturn');
+  if (hasPlayerReturn) {
+    
+    const ret = localStorage.getItem('playerReturn');
+    try {
+      const obj = JSON.parse(ret);
+      if (typeof obj.scene === 'number') scene = obj.scene;
+      if (typeof obj.x === 'number') player.x = obj.x;
+      if (typeof obj.y === 'number') player.y = obj.y;
+    } catch (e) {
+      console.warn('Failed to parse playerReturn:', e);
+    }
+    
+    if (localStorage.getItem('monster1Defeated') === '1') {
+      monster1Defeated = true;
+    }
+    try { localStorage.removeItem('playerReturn'); localStorage.removeItem('monster1Defeated'); } catch (e) {}
+  } else {
+    
+    try { localStorage.removeItem('monster1Defeated'); } catch (e) {}
+  }
+} catch (e) {
+  console.warn('LocalStorage not available:', e);
+}
 
 function updateInventoryContents() {
   if (!inventoryContents) return;
@@ -233,25 +279,33 @@ function gameLoop() {
   }
 
   if (scene === 2 && monster1Loaded) {
-    const scale = 5;
-    const baseWidth = monster1.naturalWidth || monster1.width || 80;
-    const baseHeight = monster1.naturalHeight || monster1.height || 80;
-    const monsterWidth = Math.round(baseWidth * scale);
-    const monsterHeight = Math.round(baseHeight * scale);
-    const monsterX = Math.round(canvas.width - monsterWidth - 40);
-    const monsterY = Math.round((canvas.height - monsterHeight) * 0.55);
-    ctx.drawImage(monster1, monsterX, monsterY, monsterWidth, monsterHeight);
+    if (!monster1Defeated) {
+      const scale = 5;
+      const baseWidth = monster1.naturalWidth || monster1.width || 80;
+      const baseHeight = monster1.naturalHeight || monster1.height || 80;
+      const monsterWidth = Math.round(baseWidth * scale);
+      const monsterHeight = Math.round(baseHeight * scale);
+      const monsterX = Math.round(canvas.width - monsterWidth - 40);
+      const monsterY = Math.round((canvas.height - monsterHeight) * 0.55);
+      ctx.drawImage(monster1, monsterX, monsterY, monsterWidth, monsterHeight);
 
-    if (!battleStarted) {
-      const collidesWithPlayer =
-        player.x < monsterX + monsterWidth &&
-        player.x + player.width > monsterX &&
-        player.y < monsterY + monsterHeight &&
-        player.y + player.height > monsterY;
-      if (collidesWithPlayer) {
-        battleStarted = true;
-        window.location.href = "Station X Battle.html";
-        return;
+      if (!battleStarted) {
+        const collidesWithPlayer =
+          player.x < monsterX + monsterWidth &&
+          player.x + player.width > monsterX &&
+          player.y < monsterY + monsterHeight &&
+          player.y + player.height > monsterY;
+        if (collidesWithPlayer) {
+          battleStarted = true;
+          
+          try {
+            localStorage.setItem('playerReturn', JSON.stringify({ scene, x: player.x, y: player.y }));
+          } catch (e) {
+            console.warn('Could not save playerReturn to localStorage', e);
+          }
+          window.location.href = "Station X Battle.html";
+          return;
+        }
       }
     }
   }
